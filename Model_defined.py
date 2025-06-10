@@ -141,3 +141,27 @@ for mylayer in latent_layers:
 		print(roc_auc)	
 ####save results
 pd.DataFrame(result).to_csv("./2048_128skip_ori_result.csv",index=False)
+
+
+#####Three-cross valdation###
+rom keras.models import load_model
+test_result = []	
+for folder in os.listdir("./_model/"):
+	folder=os.path.join("./_model/",folder)
+	print(folder)
+	train_index = pd.read_csv(folder+"/Train.csv",header=0,index_col=None)
+	test_index = pd.read_csv(folder+"/Val.csv",header=0,index_col=None)
+	train_features= sigmoid.iloc[train_index['0']]
+	train_labels=label.iloc[train_index['0']]
+	train_labels=tf.keras.utils.to_categorical(train_labels, num_classes=3)
+	test_features=sigmoid.iloc[test_index['0']]
+	test_labels=label.iloc[test_index['0']]
+	test_labels=tf.keras.utils.to_categorical(test_labels, num_classes=3)
+	weighted_model = load_model(folder+"/2048_128_13295features_orimodel")
+	test_predictions_weighted = weighted_model.predict(test_features, batch_size=BATCH_SIZE)
+	predicttest_dump = pd.concat([pd.DataFrame(test_predictions_weighted), pd.DataFrame(test_labels)], axis=1)
+	test_result.append(predicttest_dump)
+
+test_result = pd.concat(test_result,axis=0)
+test_result.to_csv("./13295features_test_result.csv",index=False)
+
